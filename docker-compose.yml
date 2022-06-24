@@ -1,0 +1,53 @@
+version: '3.7' # docker-compose.yml
+
+services:
+  # awscli:
+  #   build:
+  #     context: .
+  #     dockerfile: ./cicd/awscli/Dockerfile
+  #   env_file: .env
+  #   user: root
+  #   networks:
+  #     - backend-network
+  #   volumes:
+  #     - ~/.aws:/root/.aws:ro
+  #     - .:/src
+  #   working_dir: /src
+
+  db:
+    build:
+      context: .
+      dockerfile: ./cicd/db/Dockerfile
+    ports:
+      - "32000:3306"
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: store
+    networks:
+      - backend-network
+    volumes: 
+      - db-data:/var/lib/mysql
+
+  app:
+    build:
+      context: .
+      dockerfile: ./cicd/app/Dockerfile
+    env_file: .env
+    user: root
+    networks:
+      - backend-network
+    volumes: 
+      - .:/app
+
+volumes:
+  db-data:
+
+secrets:
+  db-password:
+    file: ./cicd/db/password.txt
+
+networks:
+  backend-network:

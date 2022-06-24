@@ -1,0 +1,60 @@
+#!/usr/bin/env groovy
+pipeline {
+    agent any
+
+    environment {}
+
+    stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    env.PATH = "/usr/local/bin:${env.PATH}"
+                }
+                sh 'make prepare'
+            }
+        } 
+        stage('Code Quality') {
+            steps {
+                sh 'make lint'
+            }
+        }
+        stage('Code Security') {
+            steps {
+                sh 'make security'
+            }
+        }
+        stage('CFN Validation') {
+            steps {
+                sh 'make cfn_validation'
+            }
+        }
+        stage('Unit Test') {
+            steps {
+                sh '''
+                    make test
+                    make cleanDocker
+                '''
+                script {
+                    junit "nosetest.xml"
+                }
+            }
+        }
+        stage('Run DataBase') {
+            steps {
+                sh 'make database'
+            }
+        }
+        stage('Package Build') {
+            steps {
+                sh 'make build'
+            }
+        }
+    } 
+
+    post {
+        always {
+            cleanWs()
+            deleteDir()
+        }
+    }
+}
